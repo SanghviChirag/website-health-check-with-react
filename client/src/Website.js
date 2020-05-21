@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import axios from "axios";
-import { Card, Header, Form, Input, Button, Icon } from "semantic-ui-react";
+import { Card, Header, Form, Input, Button } from "semantic-ui-react";
 
 let endpoint = "http://34.239.125.132:8080";
 
@@ -28,16 +28,20 @@ class WebsiteChecker extends Component {
 
   onSubmit = () => {
     let { URL, checkInterval } = this.state;
-    // console.log("pRINTING task", this.state.task);
-    if (URL && checkInterval) {
+    
+    if (URL && checkInterval && parseInt(checkInterval)) {
       axios
         .post(
           endpoint + "/register",
           {
-            URL,
-            checkInterval,
-            method: "GET",
-            expectedStatusCode: 200,
+            websites: [
+              {
+                URL: URL,
+                checkInterval: parseInt(checkInterval),
+                method: "GET",
+                expectedStatusCode: 200
+              }
+            ],
           },
           {
             headers: {
@@ -54,7 +58,7 @@ class WebsiteChecker extends Component {
           console.log(res);
         });
     }else{
-      alert("URL or Interval is missing");
+      alert("URL or Interval is missing. Also Make sure Interval is numeric value.");
     }
     
   };
@@ -66,8 +70,6 @@ class WebsiteChecker extends Component {
         this.setState({
           websites: res.data.map(item => {
             console.log(item)
-            
-            let color = "yellow";
 
             return (
               <Card key={item.ID} fluid>

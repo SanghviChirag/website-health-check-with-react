@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +29,16 @@ func handleRequests() {
 	myRouter.HandleFunc("/register", registerWebsite).Methods("POST", "OPTIONS")
 	myRouter.HandleFunc("/websites", getAllWebsiteInfo).Methods("GET", "OPTIONS")
 	myRouter.HandleFunc("/website/{id}", getWebsite).Methods("GET", "OPTIONS")
-	log.Fatal(http.ListenAndServe(":8080", myRouter))
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+	})
+
+	handler := c.Handler(myRouter)
+
+	log.Fatal(http.ListenAndServe(":8080", handler))
+	// log.Fatal(http.ListenAndServe(":8080", myRouter))
 }
 
 func main() {
