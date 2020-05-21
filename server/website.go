@@ -146,7 +146,7 @@ func checkLink(website Website) {
 		}
 
 		db.Create(&healthStatus)
-		fmt.Println(website.HealthStatus)
+		fmt.Println(healthStatus)
 		return
 
 	default:

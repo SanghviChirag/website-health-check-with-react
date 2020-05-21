@@ -37,7 +37,7 @@ class WebsiteChecker extends Component {
             websites: [
               {
                 URL: URL,
-                checkInterval: parseInt(checkInterval),
+                checkInterval: parseInt(checkInterval) * 60,
                 method: "GET",
                 expectedStatusCode: 200
               }
@@ -76,7 +76,7 @@ class WebsiteChecker extends Component {
                 <Card.Content>
                   <Card.Header>
                     <div style={{ wordWrap: "break-word", textAlign: "left" }}>Website: { item.URL }</div>
-                    <div style={{ wordWrap: "break-word", textAlign: "right" }}>Interval (in sec): { item.CheckInterval }</div>
+                    <div style={{ wordWrap: "break-word", textAlign: "right" }}>Interval (in min): { item.CheckInterval/60 }</div>
                   </Card.Header>
                 </Card.Content>
                 <Card.Meta textAlign="right">
@@ -153,7 +153,7 @@ class WebsiteChecker extends Component {
               onChange={this.onChange}
               value={this.state.checkInterval}
               fluid
-              placeholder="Interval"
+              placeholder="Interval (in mins)"
             />
             <Button color="blue">Register Website</Button>
           </Form>
