@@ -29,7 +29,7 @@ class WebsiteChecker extends Component {
   onSubmit = () => {
     let { URL, checkInterval } = this.state;
     
-    if (URL && checkInterval && parseInt(checkInterval)) {
+    if (URL && checkInterval && parseInt(checkInterval) && parseInt(checkInterval) < 525600) {
       axios
         .post(
           endpoint + "/register",
@@ -56,9 +56,25 @@ class WebsiteChecker extends Component {
             checkInterval: ""
           });
           console.log(res);
+        })
+        .catch(error => {
+          let message = error.response.data.message
+          if (message != null) {
+            alert(message)
+          }
+          this.getWebsites();
+          this.setState({
+            URL: "",
+            checkInterval: ""
+          });
         });
     }else{
-      alert("URL or Interval is missing. Also Make sure Interval is numeric value.");
+      if (parseInt(checkInterval) >= 525600){
+        alert("Interval value must be less than 525600 mins (i.e. a year).");
+      }else{
+        alert("URL or Interval is missing. Also Make sure Interval is numeric value.");
+      }
+      
     }
     
   };

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -51,9 +53,15 @@ type regWebReqBody struct {
 	Websites []Website
 }
 
+// Validate if requested URL is valid or not
+func isURL(str string) bool {
+	u, err := url.Parse(str)
+	return err == nil && u.Scheme != "" && u.Host != ""
+}
+
 // Handle Registration of Website
 func registerWebsite(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	db, err = gorm.Open("sqlite3", "website.db")
 	if err != nil {
 		panic("Could not connect to database")
@@ -67,24 +75,46 @@ func registerWebsite(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	var invalidURLs []string
+	var existingURLs []string
+
 	for _, website := range reqBody.Websites {
 
 		var web Website
-		if db.Where("URL = ?", website.URL).First(&web).RecordNotFound() {
-			db.Create(&website)
-			_ = setCron(website)
+		if isURL(website.URL) {
+			if db.Where("URL = ?", website.URL).First(&web).RecordNotFound() {
+				db.Create(&website)
+				_ = setCron(website)
+			} else {
+				existingURLs = append(existingURLs, website.URL)
+			}
+		} else {
+			invalidURLs = append(invalidURLs, website.URL)
 		}
 	}
-	websiteRes := map[string]string{
-		"status":  "success",
-		"message": "Website(s) Successfully Created.",
+	if len(invalidURLs) == 0 && len(existingURLs) == 0 {
+		websiteRes := map[string]string{
+			"status":  "success",
+			"message": "Website(s) Successfully Created.",
+		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Add("content-type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		jsonBytes, _ := json.Marshal(websiteRes)
+		w.Write(jsonBytes)
+	} else {
+		websiteRes := map[string]string{
+			"status":       "failure",
+			"message":      "URL(s) invalid or already exists.",
+			"invalidUrls":  strings.Join(invalidURLs, ", "),
+			"existingURLs": strings.Join(existingURLs, ", "),
+		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Add("content-type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		jsonBytes, _ := json.Marshal(websiteRes)
+		w.Write(jsonBytes)
 	}
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Add("content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	jsonBytes, _ := json.Marshal(websiteRes)
-	w.Write(jsonBytes)
-
 }
 
 // Get all websites data
@@ -144,9 +174,7 @@ func checkLink(website Website) {
 			WebsiteCheckDateTime: time.Now().UTC(),
 			IsSuccess:            isSuccess,
 		}
-
 		db.Create(&healthStatus)
-		fmt.Println(healthStatus)
 		return
 
 	default:
